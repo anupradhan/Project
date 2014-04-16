@@ -1,0 +1,827 @@
+a <- 10
+a
+?def
+?sample
+x <- 1:12
+x
+x <- seq(1, 12, by=1)
+x
+x <- 1:1:12
+x
+x <- 1:2:12
+x <- 1:15
+x
+x <- 1:1:15
+x
+x <- 1:3:15
+x <- 3:15
+x
+?seq
+?sample
+sample(x, 10, replace=TRUE)
+sample(x, 10, replace=FALSE)
+?seq
+sample(x, 10, replace=TRUE)
+?sample
+f <- function(){}
+f
+n <- 20#
+y <- 12#
+#
+th.mean <- .1#
+th.sd <- .01#
+#
+M <- 1000#
+grid.size <- 1000
+n
+y
+y/n
+th.mean
+th.st
+th.mean
+th.sd
+th <- seq(0,1,length=grid.size)  # a grid of thetas in the param space
+th
+mean(th)
+post <- dbinom(y,n,th)*dnorm(th,th.mean,th.sd)  # un-normalized posterior
+pst
+post
+sum(post)
+post/sum(post)
+sum(post/sum(post)
+)
+n <- 20#
+y <- 12#
+#
+th.mean <- .1#
+th.sd <- .01#
+#
+M <- 1000#
+grid.size <- 1000#
+#
+th <- seq(0,1,length=grid.size)  # a grid of thetas in the param space#
+#
+post <- dbinom(y,n,th)*dnorm(th,th.mean,th.sd)  # un-normalized posterior#
+#
+post <- post/sum(post) # Normalized posterior
+post
+indices <- sample(1:grid.size,M,replace=T,prob=post)
+indices
+mean(indices)
+mean(1:grid.size)
+indices <- sample(1:grid.size,M,replace=T,prob=post)
+mean(indices)
+indices <- sample(1:grid.size,M,replace=T,prob=post)
+mean(indices)
+indices <- sample(1:grid.size,M,replace=T,prob=post)
+mean(indices)
+post.sample <- th[indices]
+post.sample
+par(mfrow=c(2,2))
+plot(th,dnorm(th,th.mean,th.sd),main="Prior",#
+     xlab=paste("mean =",th.mean," sd =",th.sd),type="l")
+plot(th,dnorm(th,th.mean,th.sd),main="Prior",#
+     xlab=paste("mean =",th.mean," sd =",th.sd), type="l")
+post.mean <- round(mean(post.sample),4)
+post.sd <- round(sd(post.sample),4)
+hist(post.sample,main="Posterior",xlim=c(0,1),#
+     xlab=paste("mean =", post.mean, " sd =", post.sd))#
+plot(density(post.sample),main="Posterior",xlim=c(0,1),#
+     xlab=paste("mean =", post.mean, " sd =", post.sd))
+set.seed(31);#
+heightsCM = rnorm(30,mean=188, sd=5);#
+weightsK = rnorm(30,mean=84,sd=3); #
+hasDaughter = sample(c(TRUE,FALSE),size=30,replace=T); #
+dataFrame = data.frame(heightsCM,weightsK,hasDaughter);
+Nsim = 10^4
+Nsim
+x <- runinf(Nsim)
+x <- runif(Nsim)
+x
+x1 = x[-Nsim]
+x1
+x2 = x[-1]
+x2
+par(mfrow=c(1,2))
+hist(x)
+plot(x1, x2)
+acf(x)
+theta <- seq(0,1,by=.01)#
+n <- c(5,20,100,1000)#
+y <- c(3,12,60,600)#
+print(y/n)#
+# [1] 0.6 0.6 0.6 0.6#
+par(mfrow=c(2,2))#
+for (i in 1:4) {#
+  plot(theta,dbeta(theta,y[i]+1,n[i]-y[i]+1), type="l",ylab="")#
+  title(paste("n =",n[i],", y =",y[i]))#
+}
+clear
+Credible intervals by Monte Carlo methods#
+##
+##
+# Suppose y is Bin (n,theta) and we want to choose some non-conjugate#
+# prior for theta, say, theta is N(mu,sigma^2) restricted to [0,1]#
+##
+# So, density of y is dbinom(y,n,theta)#
+# and density of theta is dnorm(theta,th.mean,th.sd) given theta in [0,1]#
+#
+grid <- function(n=20,y=12,th.mean=.5,th.sd=.2,M=1000,grid.size=10000) {#
+#
+  th <- seq(0,1,length=grid.size)  # a grid of thetas in the param space#
+  post <- dbinom(y,n,th)*dnorm(th,th.mean,th.sd)  # un-normalized posterior#
+  post <- post/sum(post) # Normalized posterior#
+  indices <- sample(1:grid.size,M,replace=T,prob=post)#
+  post.sample <- th[indices]#
+#
+  return(post.sample)#
+}#
+fast <- function(n=20,y=12,th.mean=.5,th.sd=.2,M=100) {#
+#
+  # "fast" rejection sampler...#
+  # NOT FAST IF PRIOR MUCH DIFFERENT FROM LIKELIHOOD!!#
+  ##
+  mle <- y/n # not hard in this case at least!#
+  post.sample <- rep(NA,M)#
+  notdone <- rep(TRUE,M)#
+  while (any(notdone)) {#
+    k <- sum(notdone)#
+#
+    theta <- rnorm(k,th.mean,th.sd)#
+    while( any(not.ok <- (theta<0)|(theta>1)) ) {#
+      theta[not.ok] <- rnorm(sum(not.ok),th.mean,th.sd)#
+    }#
+#
+    U <- runif(k)#
+    accept <- (U <= dbinom(y,n,theta)/dbinom(y,n,mle))#
+    index <- ((1:M)[notdone])[accept]#
+    post.sample[index] <- theta[accept]#
+#
+    notdone[index] <- FALSE#
+#
+  }#
+#
+  return(post.sample)#
+#
+}#
+#
+demo <- function(y=12,n=20,th.mean,th.sd,M,alpha=0.05,meth=fast) {#
+  ps <- meth(y=y,n=n,th.mean=th.mean,th.sd=th.sd,M=M)#
+  par(mfrow=c(2,2))#
+                                        # mean +/- 2 SD interval#
+  post.mean <- mean(ps)#
+  post.sd <- sqrt(var(ps))#
+#
+  z <- qnorm(1-alpha/2,0,1)#
+  lo <- post.mean-z*post.sd#
+  hi <- post.mean+z*post.sd#
+#
+  note <- paste(paste(c("lo =","hi ="),round(c(lo,hi),2)),collapse="; ")#
+  plot(density(ps),main="mean +/- 2SD",xlim=c(0,1),xlab=note)#
+  abline(v=lo)#
+  abline(v=hi)#
+                                        # equal tailed 95% CI#
+#
+  quants <- quantile(ps,c(alpha/2,1-alpha/2))#
+  lo <- quants[1]#
+  hi <- quants[2]#
+#
+  note <- paste(paste(c("lo =","hi ="),round(c(lo,hi),2)),collapse="; ")#
+  plot(density(ps),main="equal-tailed",xlim=c(0,1),xlab=note)#
+  abline(v=lo)#
+  abline(v=hi)#
+                                        # HPD method 1#
+#
+  post.vals <- dbinom(y,n,ps)*dnorm(ps,th.mean,th.sd) # no denom is OK!#
+  cutoff <- quantile(post.vals,alpha)#
+#
+  lo <- min(ifelse(post.vals>=cutoff,ps,Inf))#
+  hi <- max(ifelse(post.vals>=cutoff,ps,-Inf))#
+  note <- paste(paste(c("lo =","hi ="),round(c(lo,hi),2)),collapse="; ")#
+  plot(density(ps),main="HPD method 1",xlim=c(0,1),xlab=note)#
+  abline(v=lo)#
+  abline(v=hi)#
+                                        # HPD method 2#
+#
+  sort.th <- sort(ps)#
+  M <- length(sort.th)#
+  m.good <- 1#
+  k.good <- 1#
+  min.len <- Inf#
+  for (m in 1:(floor(alpha*M))) {#
+    k <- floor((1-alpha)*M+m-1)#
+    new.len <- sort.th[k] - sort.th[m]#
+    if (new.len<min.len) {#
+      m.good <- m#
+      k.good <- k#
+      min.len <- new.len#
+    }#
+  }#
+#
+  lo <- sort.th[m.good]  #
+  hi <- sort.th[k.good]  #
+#
+  note <- paste(paste(c("lo =","hi ="),round(c(lo,hi),2)),collapse="; ")#
+  plot(density(ps),main="HPD method 2",xlim=c(0,1),xlab=note)#
+  abline(v=lo)#
+  abline(v=hi)#
+}#
+#
+demo(th.mean=.5,th.sd=.2,M=1000,meth=grid)#
+#
+demo(th.mean=.1,th.sd=.1,M=1000,meth=grid)#
+#
+demo(y=19,n=20,th.mean=.5,th.sd=1000,M=1000,meth=grid)
+library(languageR)#
+library(bayesm)#
+my.cols <- c("magenta","green")#
+# first, function to fill area under curve#
+fill <- function(x1, x2, f,n=50, color="gray") {#
+  xvals <- seq(x1, x2, by=(x2-x1)/n)#
+  yvals <- f(xvals)#
+  #print(xvals)#
+  #print(yvals)#
+  #print(length(xvals))#
+  polygon(c(xvals, rev(xvals)), c(rep(0, n+1), rev(yvals)), col=color,border=NA)#
+  lines(c(xvals[1], xvals[length(xvals)]), c(0,0), col=color)#
+}#
+# second, function to prettify S scalar expression output#
+latex.scalar <- function(x) {#
+  # TODO#
+  x#
+}#
+options(lineWidth=55)
+install.package(languageR)
+package.install
+library(languageR)#
+library(bayesm)#
+my.cols <- c("magenta","green")#
+# first, function to fill area under curve#
+fill <- function(x1, x2, f,n=50, color="gray") {#
+  xvals <- seq(x1, x2, by=(x2-x1)/n)#
+  yvals <- f(xvals)#
+  #print(xvals)#
+  #print(yvals)#
+  #print(length(xvals))#
+  polygon(c(xvals, rev(xvals)), c(rep(0, n+1), rev(yvals)), col=color,border=NA)#
+  lines(c(xvals[1], xvals[length(xvals)]), c(0,0), col=color)#
+}#
+# second, function to prettify S scalar expression output#
+latex.scalar <- function(x) {#
+  # TODO#
+  x#
+}#
+options(lineWidth=55)
+b1 <- 5#
+b2 <- 29#
+alpha <- 0.05#
+p <- seq(0,1,by=0.01)#
+old.par <- par(mar=c(5,4,4,5)+0.1)#
+plot(p, dbeta(p, b1, b2),type="l",ylab=expression(p(paste(pi, "|", bold(y)))),xlab=expression(pi),lwd=1,ylim=c(0,8))#
+minlength <- 1#
+p1 <- 0#
+p2 <- 1#
+for(p1.test in seq(0,1,by=0.01)) {#
+  mass.left <- pbeta(p1.test, b1, b2)#
+  if(mass.left > alpha)#
+    break#
+  p2.test <- qbeta(mass.left + 1 - alpha, b1, b2)#
+  if(p2.test - p1.test < minlength) {#
+    minlength <- p2.test - p1.test#
+    p1 <- p1.test#
+    p2 <- p2.test#
+  }#
+}#
+lines(c(p1,p1), c(0,dbeta(p1, b1, b2)))#
+lines(c(p2,p2), c(0,dbeta(p2, b1, b2)))#
+#fill(0,p1,function(x) dbeta(x, b1, b2))#
+fill(p1,p2,function(x) dbeta(x, b1, b2))
+b1 <- 5#
+b2 <- 29#
+alpha <- 0.05#
+p <- seq(0,1,by=0.01)#
+old.par <- par(mar=c(5,4,4,5)+0.1)#
+plot(p, dbeta(p, b1, b2),type="l",ylab=expression(p(paste(pi, "|", bold(y)))),xlab=expression(pi),lwd=1,ylim=c(0,8))#
+p1 <- qbeta(alpha/2, b1,b2)#
+p2 <- qbeta(1 - alpha/2, b1,b2)#
+lines(c(p1,p1), c(0,dbeta(p1, b1, b2)))#
+lines(c(p2,p2), c(0,dbeta(p2, b1, b2)))#
+#fill(0,p1,function(x) dbeta(x, b1, b2))#
+fill(p1,p2,function(x) dbeta(x, b1, b2))
+pyH1 <- choose(6,4) * 0.5^6#
+pyH2 <- 0.5 * choose(6,4) * (1/3)^2 * (2/3)^2 * ( (1/3)^2 + (2/3)^2)#
+py <- (pyH1 + pyH2) / 2#
+####################################################
+### code chunk number 5: confidence_intervals_and_hypothesis_testing.Rnw:469-471#
+####################################################
+pyH3 <- choose(6,4) * beta(5,3)#
+pH1y <- pyH1 / (pyH1 + pyH3)#
+####################################################
+### code chunk number 6: probabilityDensitiesBandPVOT#
+####################################################
+mu1 <- 0#
+mu2 <- 50#
+sigma <- 12#
+x <- seq(-20,80,by=0.1)#
+y1 <- dnorm(x,mu1,sigma)#
+y2 <- dnorm(x,mu2,sigma)#
+plot(y1 ~ x,type="l",col=my.cols[1],xlab="VOT",ylab="Probability density",lwd=2)#
+lines(y2 ~ x, col=my.cols[2],lwd=2,lty=2)#
+text(c(-10,60),c(0.031,0.031),c("/b/","/p/"),col=my.cols[1:2])#
+x1 <- 27.25#
+x2 <- 26.75#
+mean.x <- mean(c(x1,x2))#
+arrows(x1,0,x1,dnorm(x1,mu1,sigma)-0.00025,length=0.1,col=my.cols[1])#
+arrows(x2,0,x2,dnorm(x2,mu2,sigma)-0.00025,length=0.1,col=my.cols[2],lty=2)#
+points(mean.x,-0.00025,pch=19,cex=0.65)#
+axis(1,at=27,lwd=2,cex=0.5,tck=-0.01,font=6,cex.axis=0.75,padj=-1)#
+####################################################
+### code chunk number 7: bayesPhonemeDiscriminationPosteriorProbs#
+####################################################
+f <- function(x) 1/(1+exp( ((x-mu1)^2 - (x-mu2)^2 ) / (2*sigma^2)))#
+plot(f(x) ~ x, type="l",ylab="Posterior probability of /b/",xlab="VOT",lwd=2)#
+points(mean.x,f(mean.x),pch=19)#
+####################################################
+### code chunk number 8: VOTVarianceManipulation#
+####################################################
+sigma <- 8#
+y1 <- dnorm(x,mu1,sigma)#
+y2 <- dnorm(x,mu2,sigma)#
+plot(y1 ~ x,type="l",col="magenta",xlab="VOT",ylab="Probability density",lwd=1)#
+lines(y2 ~ x, col="green",lwd=1,lty=2)#
+sigma <- 14#
+y1 <- dnorm(x,mu1,sigma)#
+y2 <- dnorm(x,mu2,sigma)#
+lines(y1 ~ x,col="magenta",lwd=3)#
+lines(y2 ~ x, col="green",lwd=3,lty=2)#
+text(c(-10,60),c(0.035,0.035),c("[b]","[p]"),col=c("magenta","green"))#
+####################################################
+### code chunk number 9: VOTVarianceIdealResponses#
+####################################################
+sigma <- 14#
+y1 <- dnorm(x,mu1,sigma)#
+y2 <- dnorm(x,mu2,sigma)#
+discrim <- y1/(y1+y2)#
+plot(discrim ~ x, type="l",lwd=3,xlab="VOT",ylab="Posterior probability of /b/")#
+sigma <- 8#
+y1 <- dnorm(x,mu1,sigma)#
+y2 <- dnorm(x,mu2,sigma)#
+discrim <- y1/(y1+y2)#
+lines(discrim ~ x, lwd=1)#
+####################################################
+### code chunk number 10: VOTVarianceEmpiricalResponses#
+####################################################
+dat <- read.table("../data/clayards-etal-2008/cognition_trialbytrial_resp.txt",header=T)#
+rates <- with(subset(dat,VOT >= -20),aggregate(list(response=response),list(condition=condition,VOT=VOT),mean,na.rm=T))#
+plot(1-response ~ VOT, data=subset(rates,condition=="N"),type="b",col="black",lwd=1,pch='.',ylab="Proportion response /b/",xlim=c(-20,80))#
+lines(1-response ~ VOT, data=subset(rates,condition=="W"),type="b",col="black",lwd=3,pch=19,cex=0.5)#
+####################################################
+### code chunk number 11: confidence_intervals_and_hypothesis_testing.Rnw:918-922#
+####################################################
+pb <- read.table("../data/peterson_barney_data/pb.txt",header=T)#
+eh <- subset(pb,Vowel=="eh")#
+half.length <- round(sd(eh[["F1"]]) / sqrt(length(eh[["F1"]])) * (-1 * qt(0.025,length(eh[["F1"]]))),2)#
+eh.mean <- round(mean(eh[["F1"]]),2)#
+####################################################
+### code chunk number 12: tBasedConfidenceInterval#
+####################################################
+n <- 5#
+x <- seq(-4,4,by=0.01)#
+old.par <- par(mar=c(5,6,4,2)+0.1)#
+plot(x,dt(x,n),type="l",xlab=expression(frac(hat(mu) - mu, sqrt (S^2 / n))), ylab=expression(p(frac(hat(mu) - mu, sqrt (S^2 / n)))))#
+low.cutoff <- qt(0.025,n)#
+x.low <- subset(x,x < low.cutoff)#
+polygon(c(-4,x.low,low.cutoff),c(0,dt(x.low,n),0),col="lightgrey")#
+high.cutoff <- qt(0.975,n)#
+x.high <- subset(x,x >  high.cutoff)#
+polygon(c(high.cutoff,x.high,4),c(0,dt(x.high,n),0),col="lightgrey")#
+par(old.par)#
+####################################################
+### code chunk number 13: epsilonF1#
+####################################################
+#pb <- read.table("../data/peterson_barney_data/pb.txt",header=T)#
+#eh <- subset(pb,Vowel=="eh")#
+#length(eh[,1]) # 152 data points#
+#mean(eh$F1)#
+#sd(eh$F1)#
+hist(eh$F1,breaks=20,prob=T)#
+x <- seq(350,900,by=1)#
+lines(x,dnorm(x,590.7,97.1))#
+####################################################
+### code chunk number 14: sigPowerTradeoff#
+####################################################
+x <- seq(0,45,by=1)#
+plot(x,dbinom(x, 45, 0.5),type="l",ylim=c(0,0.2),xlab=expression(r),ylab=expression(P(r)),cex.lab=1.2,cex.axis=1.2)#
+legend(15, 0.2, c(expression(paste(pi[0],"=0.5")),expression(paste(pi[A],"=0.75")),expression(paste(pi[A],"=0.25"))), col=c("black","green","magenta"),lwd=3,cex=1.2)#
+fill(18-0.2,18+0.2,function(x) rep(dbinom(18,45,0.5),length(x)),color="darkgrey")#
+fill(27-0.2,29+0.2,function(x) dbinom(floor(x), 45, 0.5) + (dbinom(ceiling(x), 45, 0.5) - dbinom(floor(x), 45, 0.5)) * (x - floor(x)))#
+lines(x,dbinom(x, 45, 0.25),type="l",lwd=3,col="magenta")#
+lines(x,dbinom(x, 45, 0.75),type="l",lwd=3,col="green")#
+lines(x,dbinom(x, 45, 0.5),type="l",lwd=3,ylim=c(0,0.25),xlab=expression(r),ylab=expression(P(r)))#
+####################################################
+### code chunk number 15: sigPowerTradeoffRatio#
+####################################################
+old.par <- par(mar=c(5,5.5,4,2)+0.1)#
+plot(x,log(dbinom(x, 45, 0.5)/dbinom(x,45,0.75)),type="l",lwd=3,col="green",xlab=expression(r),#
+  ylab=expression(log(frac(paste("P(r | ", H[A], ")"),paste("P(r | ", H[0],"))")))),cex.axis=1.2,cex.lab=1.2) # FIX THE PROB SYMBOLS#
+lines(x,log(dbinom(x, 45, 0.5)/dbinom(x,45,0.25)),type="l",lwd=3,col="magenta")#
+legend(15, 30, c(expression(paste(pi[A],"=0.75")),expression(paste(pi[A],"=0.25"))), col=c("green","magenta"),lwd=3,cex=1.2)#
+par(old.par)#
+####################################################
+### code chunk number 16: binomTestCorrectRejectionRegion#
+####################################################
+x <- seq(0,45,by=1)#
+plot(x,dbinom(x, 45, 0.5),type="l",ylim=c(0,0.15),xlab=expression(r),ylab=expression(P(r)),lwd=3,lab=c(10,5,7),cex.axis=1.2,cex.lab=1.2)#
+fill(0,15+0.2,function(x) dbinom(floor(x), 45, 0.5) + (dbinom(ceiling(x), 45, 0.5) - dbinom(floor(x), 45, 0.5)) * (x - floor(x)))#
+fill(30-0.2,45,function(x) dbinom(floor(x), 45, 0.5) + (dbinom(ceiling(x), 45, 0.5) - dbinom(floor(x), 45, 0.5)) * (x - floor(x)))#
+fill(15,16,function(x) dbinom(floor(x), 45, 0.5) + (dbinom(ceiling(x), 45, 0.5) - dbinom(floor(x), 45, 0.5)) * (x - floor(x)),col="black")
+Credible intervals by Monte Carlo methods#
+##
+##
+# Suppose y is Bin (n,theta) and we want to choose some non-conjugate#
+# prior for theta, say, theta is N(mu,sigma^2) restricted to [0,1]#
+##
+# So, density of y is dbinom(y,n,theta)#
+# and density of theta is dnorm(theta,th.mean,th.sd) given theta in [0,1]#
+#
+grid <- function(n=20,y=12,th.mean=.5,th.sd=.2,M=1000,grid.size=10000) {#
+#
+  th <- seq(0,1,length=grid.size)  # a grid of thetas in the param space#
+  post <- dbinom(y,n,th)*dnorm(th,th.mean,th.sd)  # un-normalized posterior#
+  post <- post/sum(post) # Normalized posterior#
+  indices <- sample(1:grid.size,M,replace=T,prob=post)#
+  post.sample <- th[indices]#
+#
+  return(post.sample)#
+}#
+fast <- function(n=20,y=12,th.mean=.5,th.sd=.2,M=100) {#
+#
+  # "fast" rejection sampler...#
+  # NOT FAST IF PRIOR MUCH DIFFERENT FROM LIKELIHOOD!!#
+  ##
+  mle <- y/n # not hard in this case at least!#
+  post.sample <- rep(NA,M)#
+  notdone <- rep(TRUE,M)#
+  while (any(notdone)) {#
+    k <- sum(notdone)#
+#
+    theta <- rnorm(k,th.mean,th.sd)#
+    while( any(not.ok <- (theta<0)|(theta>1)) ) {#
+      theta[not.ok] <- rnorm(sum(not.ok),th.mean,th.sd)#
+    }#
+#
+    U <- runif(k)#
+    accept <- (U <= dbinom(y,n,theta)/dbinom(y,n,mle))#
+    index <- ((1:M)[notdone])[accept]#
+    post.sample[index] <- theta[accept]#
+#
+    notdone[index] <- FALSE#
+#
+  }#
+#
+  return(post.sample)#
+#
+}#
+#
+demo <- function(y=12,n=20,th.mean,th.sd,M,alpha=0.05,meth=fast) {#
+  ps <- meth(y=y,n=n,th.mean=th.mean,th.sd=th.sd,M=M)#
+  par(mfrow=c(2,2))#
+                                        # mean +/- 2 SD interval#
+  post.mean <- mean(ps)#
+  post.sd <- sqrt(var(ps))#
+#
+  z <- qnorm(1-alpha/2,0,1)#
+  lo <- post.mean-z*post.sd#
+  hi <- post.mean+z*post.sd#
+#
+  note <- paste(paste(c("lo =","hi ="),round(c(lo,hi),2)),collapse="; ")#
+  plot(density(ps),main="mean +/- 2SD",xlim=c(0,1),xlab=note)#
+  abline(v=lo)#
+  abline(v=hi)#
+                                        # equal tailed 95% CI#
+#
+  quants <- quantile(ps,c(alpha/2,1-alpha/2))#
+  lo <- quants[1]#
+  hi <- quants[2]#
+#
+  note <- paste(paste(c("lo =","hi ="),round(c(lo,hi),2)),collapse="; ")#
+  plot(density(ps),main="equal-tailed",xlim=c(0,1),xlab=note)#
+  abline(v=lo)#
+  abline(v=hi)#
+                                        # HPD method 1#
+#
+  post.vals <- dbinom(y,n,ps)*dnorm(ps,th.mean,th.sd) # no denom is OK!#
+  cutoff <- quantile(post.vals,alpha)#
+#
+  lo <- min(ifelse(post.vals>=cutoff,ps,Inf))#
+  hi <- max(ifelse(post.vals>=cutoff,ps,-Inf))#
+  note <- paste(paste(c("lo =","hi ="),round(c(lo,hi),2)),collapse="; ")#
+  plot(density(ps),main="HPD method 1",xlim=c(0,1),xlab=note)#
+  abline(v=lo)#
+  abline(v=hi)#
+                                        # HPD method 2#
+#
+  sort.th <- sort(ps)#
+  M <- length(sort.th)#
+  m.good <- 1#
+  k.good <- 1#
+  min.len <- Inf#
+  for (m in 1:(floor(alpha*M))) {#
+    k <- floor((1-alpha)*M+m-1)#
+    new.len <- sort.th[k] - sort.th[m]#
+    if (new.len<min.len) {#
+      m.good <- m#
+      k.good <- k#
+      min.len <- new.len#
+    }#
+  }#
+#
+  lo <- sort.th[m.good]  #
+  hi <- sort.th[k.good]  #
+#
+  note <- paste(paste(c("lo =","hi ="),round(c(lo,hi),2)),collapse="; ")#
+  plot(density(ps),main="HPD method 2",xlim=c(0,1),xlab=note)#
+  abline(v=lo)#
+  abline(v=hi)#
+}#
+#
+demo(th.mean=.5,th.sd=.2,M=1000,meth=grid)#
+#
+demo(th.mean=.1,th.sd=.1,M=1000,meth=grid)#
+#
+demo(y=19,n=20,th.mean=.5,th.sd=1000,M=1000,meth=grid)
+Importance sampling example#
+##
+#
+IS.example <- function(n=20,y=12,th.mean=.5,th.sd=.2,M=100) {#
+#
+  # n <- 20#
+  # y <- 12#
+  ##
+  # th.mean <- .5#
+  # th.sd <- .2#
+  ##
+  # M <- 100#
+  theta <- rnorm(M,th.mean,th.sd)#
+  while (any(not.ok <- (theta<0)|(theta>1))) {#
+    theta[not.ok] <- rnorm(sum(not.ok),th.mean,th.sd)#
+  }#
+#
+  post.mean <- sum(theta*dbinom(y,n,theta))/sum(dbinom(y,n,theta))#
+#
+  post.var <- sum((theta-post.mean)^2*dbinom(y,n,theta))/sum(dbinom(y,n,theta))#
+#
+  c(post.mean=post.mean,post.sd=sqrt(post.var),#
+    "MCSE(mean)"=sqrt(post.var/M))#
+#
+}#
+#
+IS.example()#
+#
+###########################################################################
+##
+##
+# SIR Example#
+##
+##
+SIR.example <- function(n=20,y=12,th.mean=.5,th.sd=.2,N=100,M=10*N) {#
+#
+  # n <- 20#
+  # y <- 12#
+  ##
+  # th.mean <- .5#
+  # th.sd <- .2#
+  ##
+  # N <- 100, M <- 10*N#
+#
+  # SAMPLE#
+  theta <- rnorm(M,th.mean,th.sd)#
+  while( any(not.ok <- (theta<0)|(theta>1)) ) {#
+    theta[not.ok] <- rnorm(sum(not.ok),th.mean,th.sd)#
+  }#
+#
+  # IMPORTANCE WEIGHTS (nb., "q" is not a good variable to use in R)#
+  qq <- dbinom(y,n,theta)/sum(dbinom(y,n,theta))#
+#
+  # RESAMPLE#
+  post.sample <- sample(theta,N,replace=T,prob=qq)#
+#
+  par(mfrow=c(2,2))#
+#
+  th <- seq(0,1,length=1000)#
+  plot(th,dnorm(th,th.mean,th.sd),main="Prior",#
+       xlab=paste("mean =",th.mean," sd =",th.sd),type="l")#
+  plot(th,dnorm(th,th.mean,th.sd),main="Prior",#
+       xlab=paste("mean =",th.mean," sd =",th.sd), type="l")#
+  post.mean <- round(mean(post.sample),4)#
+  post.sd <- round(sd(post.sample),4)#
+  hist(post.sample,main="Posterior",xlim=c(0,1),#
+       xlab=paste("mean =", post.mean, " sd =", post.sd))#
+  plot(density(post.sample),main="Posterior",xlim=c(0,1),#
+       xlab=paste("mean =", post.mean, " sd =", post.sd))#
+#
+}#
+#
+SIR.example()
+x = c(10, 10, 10, 50, 200)
+mean(x)
+mode(x)
+median(x)
+mod(x)
+mode
+mode(x)
+estimate_mode(x)
+x = c(10, 10, 10, 50, 200)
+y = c(10, 20, 30, 50, 180)
+mean(y)
+y = c(10, 20, 30, 50, 170)
+mean(y)
+y = c(10, 20, 50, 50, 150)
+mean(y)
+median(y)
+y = c(10, 10, 20, 50, 190)
+mean(y)
+median(y)
+z = c(10, 10, 50, 90, 90)
+mean(c)
+mean(z)
+median(z)
+z = c(10, 10, 50, 50, 90, 90)
+mean(z)
+median(z)
+x = seq(from=-4, to=4, by=0.1)
+x
+y = x^2
+plot(x, y)
+s
+sd(s)
+p <- c(30, 30, 30, 40, 40, 50, 50, 50)
+mean(p)
+d <- s
+d
+mean(d)
+sd(d)
+sd(p)
+a = c(2, 2, 2, 2)
+a
+mean(a)
+sum(a)
+2*a
+a <- c(2, 3, 1)
+lm
+clc
+demo()
+.history
+rm(list = ls())#
+setwd("~/Google Drive/GATECH/CS7641/Assignment1")#
+#
+# Reading input file (thoracic Surgery Data Set)#
+data <- read.table("breast-cancer.csv", header=TRUE, sep = ",", dec=".")#
+set.seed(123)#
+#
+#sampling 2/3 of the input data#
+samp <- sample(1:nrow(data), as.integer(nrow(data)*0.66))#
+X = data[,1:length(data)-1]#
+Y = data[,length(data)]#
+#
+# decision tree#
+library(rpart)#
+tree.infogain <- rpart(Class ~ ., data=data, parms = list(split="information"), cp=0.002, method="class")#
+tree.gini <- rpart(Class ~ ., data=data, parms = list(split="gini"), cp=0.002, method="class")#
+#
+#prunning tree#
+tree2.infogain <- prune(tree.infogain, cp=0.01)#
+tree2.gini <- prune(tree.gini, cp=0.01)#
+#
+#plotting prunned trees for better visualization#
+plot(tree2.infogain, uniform=T)#
+text(tree2.infogain, digits=2, use.n=TRUE)
+rm(list = ls())#
+setwd("~/Google Drive/GATECH/CS7641/Assignment1")#
+#
+# Reading input file (thoracic Surgery Data Set)#
+data <- read.table("breast-cancer.csv", header=TRUE, sep = ",", dec=".")#
+set.seed(123)#
+#
+#sampling 2/3 of the input data#
+samp <- sample(1:nrow(data), as.integer(nrow(data)*0.66))#
+X = data[,1:length(data)-1]#
+Y = data[,length(data)]#
+#
+# decision tree#
+library(rpart)#
+tree.infogain <- rpart(Class ~ ., data=data, parms = list(split="information"), cp=0.002, method="class")#
+tree.gini <- rpart(Class ~ ., data=data, parms = list(split="gini"), cp=0.002, method="class")#
+#
+#prunning tree#
+tree2.infogain <- prune(tree.infogain, cp=0.01)#
+tree2.gini <- prune(tree.gini, cp=0.01)#
+#
+#plotting prunned trees for better visualization#
+plot(tree2.infogain, uniform=T)#
+text(tree2.infogain, digits=2)
+rm(list = ls())#
+setwd("~/Google Drive/GATECH/CS7641/Assignment1")#
+#
+# Reading input file (thoracic Surgery Data Set)#
+data <- read.table("breast-cancer.csv", header=TRUE, sep = ",", dec=".")#
+set.seed(123)#
+#
+#sampling 2/3 of the input data#
+samp <- sample(1:nrow(data), as.integer(nrow(data)*0.66))#
+X = data[,1:length(data)-1]#
+Y = data[,length(data)]#
+#
+# decision tree#
+library(rpart)#
+tree.infogain <- rpart(Class ~ ., data=data, parms = list(split="information"), cp=0.002, method="class")#
+tree.gini <- rpart(Class ~ ., data=data, parms = list(split="gini"), cp=0.002, method="class")#
+#
+#prunning tree#
+tree2.infogain <- prune(tree.infogain, cp=0.01)#
+tree2.gini <- prune(tree.gini, cp=0.01)#
+#
+#plotting prunned trees for better visualization#
+plot(tree2.infogain, uniform=T)#
+text(tree2.infogain, digits=2, use.n=TRUE)#
+#
+plot(tree2.gini, uniform=T)#
+text(tree2.gini, digits=2, use.n=TRUE)
+rm(list = ls())#
+setwd("~/Google Drive/GATECH/CS7641/Assignment1")#
+#
+# Reading input file (thoracic Surgery Data Set)#
+data <- read.table("breast-cancer.csv", header=TRUE, sep = ",", dec=".")#
+set.seed(123)#
+#
+#sampling 2/3 of the input data#
+samp <- sample(1:nrow(data), as.integer(nrow(data)*0.66))#
+X = data[,1:length(data)-1]#
+Y = data[,length(data)]#
+#
+# decision tree#
+library(rpart)#
+tree.infogain <- rpart(Class ~ ., data=data, parms = list(split="information"), cp=0.002, method="class")#
+tree.gini <- rpart(Class ~ ., data=data, parms = list(split="gini"), cp=0.002, method="class")#
+#
+#prunning tree#
+tree2.infogain <- prune(tree.infogain, cp=0.01)#
+tree2.gini <- prune(tree.gini, cp=0.01)#
+#
+#plotting prunned trees for better visualization#
+plot(tree2.infogain, uniform=T)#
+text(tree2.infogain, digits=2, use.n=TRUE)#
+#
+plot(tree2.gini, uniform=T)#
+text(tree2.gini, digits=2, use.n=TRUE)
+rm(list = ls())#
+setwd("~/Google Drive/GATECH/CS7641/Assignment1")#
+#
+# Reading input file (thoracic Surgery Data Set)#
+data <- read.table("breast-cancer.csv", header=TRUE, sep = ",", dec=".")#
+set.seed(123)#
+#
+#sampling 2/3 of the input data#
+samp <- sample(1:nrow(data), as.integer(nrow(data)*0.66))#
+X = data[,1:length(data)-1]#
+Y = data[,length(data)]#
+#
+# decision tree#
+library(rpart)#
+tree.infogain <- rpart(Class ~ ., data=data, parms = list(split="information"), cp=0.002, method="class")#
+tree.gini <- rpart(Class ~ ., data=data, parms = list(split="gini"), cp=0.002, method="class")#
+#
+#prunning tree#
+tree2.infogain <- prune(tree.infogain, cp=0.01)#
+tree2.gini <- prune(tree.gini, cp=0.01)#
+#
+#plotting prunned trees for better visualization#
+plot(tree2.infogain, uniform=T)#
+text(tree2.infogain, digits=2, use.n=TRUE)#
+#
+plot(tree2.gini, uniform=T)#
+text(tree2.gini, digits=2, use.n=TRUE)
+rm(list = ls())#
+setwd("~/Google Drive/GATECH/CS7641/Assignment1")#
+#
+# Reading input file (thoracic Surgery Data Set)#
+data <- read.table("breast-cancer.csv", header=TRUE, sep = ",", dec=".")#
+set.seed(123)#
+#
+#sampling 2/3 of the input data#
+samp <- sample(1:nrow(data), as.integer(nrow(data)*0.66))#
+X = data[,1:length(data)-1]#
+Y = data[,length(data)]#
+#
+# decision tree#
+library(rpart)#
+tree.infogain <- rpart(Class ~ ., data=data, parms = list(split="information"), cp=0.002, method="class")#
+tree.gini <- rpart(Class ~ ., data=data, parms = list(split="gini"), cp=0.002, method="class")#
+#
+#prunning tree#
+tree2.infogain <- prune(tree.infogain, cp=0.01)#
+tree2.gini <- prune(tree.gini, cp=0.01)
+plot(tree2.gini, uniform=T)#
+text(tree2.gini, digits=2, use.n=TRUE)
+plot(tree2.gini, uniform=T)#
+text(tree2.gini, digits=2)
